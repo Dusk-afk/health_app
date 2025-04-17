@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'member/member_screen.dart';
 
 class FamilyScreen extends StatefulWidget {
   const FamilyScreen({Key? key}) : super(key: key);
@@ -8,31 +9,35 @@ class FamilyScreen extends StatefulWidget {
 }
 
 class _FamilyScreenState extends State<FamilyScreen> {
-  // Sample family member data with Indian names
+  // Sample family member data with Indian names and gender
   final List<Map<String, dynamic>> _familyMembers = [
     {
       'name': 'Priya',
       'relation': 'Spouse',
       'age': 34,
       'avatar': Icons.face,
+      'gender': 'female',
     },
     {
       'name': 'Arjun',
       'relation': 'Child',
       'age': 12,
       'avatar': Icons.child_care,
+      'gender': 'male',
     },
     {
       'name': 'Ananya',
       'relation': 'Child',
       'age': 8,
       'avatar': Icons.child_care,
+      'gender': 'female',
     },
     {
       'name': 'Rajesh',
       'relation': 'Father',
       'age': 68,
       'avatar': Icons.elderly,
+      'gender': 'male',
     },
   ];
 
@@ -212,23 +217,39 @@ class _FamilyScreenState extends State<FamilyScreen> {
   }
 
   Widget _buildFamilyMemberCard(Map<String, dynamic> member) {
-    // Alternate between two colors from HomeScreen
-    final List<Color> avatarColors = [
-      const Color(0xFF9AD7D8), // Light blue
-      const Color(0xFFA2A3F3), // Purple
-    ];
+    // Define color scheme based on gender
+    final String gender = member['gender'] ?? 'prefer_not_to_say';
 
-    final List<Color> bgColors = [
-      const Color(0xFFC9EBED), // Light blue bg
-      const Color(0xFFD0D1FF), // Purple bg
-    ];
+    // Colors for male/prefer not to say (light blue) and female (purple)
+    final Map<String, List<Color>> genderColors = {
+      'male': [
+        const Color(0xFF9AD7D8), // Light blue for avatar border
+        const Color(0xFFC9EBED), // Light blue bg
+      ],
+      'female': [
+        const Color(0xFFA2A3F3), // Purple for avatar border
+        const Color(0xFFD0D1FF), // Purple bg
+      ],
+      'prefer_not_to_say': [
+        const Color(0xFF9AD7D8), // Same as male - light blue
+        const Color(0xFFC9EBED), // Light blue bg
+      ],
+    };
 
-    final colorIndex = _familyMembers.indexOf(member) % 2;
+    // Select colors based on gender
+    final List<Color> colors = genderColors[gender] ?? genderColors['prefer_not_to_say']!;
+    final Color avatarBorderColor = colors[0];
+    final Color avatarBgColor = colors[1];
 
     return InkWell(
       onTap: () {
         // Navigate to member details or edit page when tapped
-        _showEditFamilyMemberDialog(context, member);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MemberScreen(memberData: member),
+          ),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
@@ -250,19 +271,19 @@ class _FamilyScreenState extends State<FamilyScreen> {
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [avatarColors[colorIndex], avatarColors[colorIndex].withOpacity(0.7)],
+                  colors: [avatarBorderColor, avatarBorderColor.withOpacity(0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
               ),
               child: CircleAvatar(
-                backgroundColor: bgColors[colorIndex],
+                backgroundColor: avatarBgColor,
                 radius: 40,
                 child: Icon(
                   member['avatar'],
                   size: 45,
-                  color: avatarColors[colorIndex],
+                  color: avatarBorderColor,
                 ),
               ),
             ),
@@ -300,65 +321,122 @@ class _FamilyScreenState extends State<FamilyScreen> {
     final nameController = TextEditingController();
     final relationController = TextEditingController();
     final ageController = TextEditingController();
+    String selectedGender = 'prefer_not_to_say'; // Default gender
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Family Member'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                hintText: 'Enter name',
-              ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Family Member'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    hintText: 'Enter name',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: relationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Relation',
+                    hintText: 'E.g., Spouse, Child, Parent',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: ageController,
+                  decoration: const InputDecoration(
+                    labelText: 'Age',
+                    hintText: 'Enter age',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Gender',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: const Text('Male'),
+                        value: 'male',
+                        groupValue: selectedGender,
+                        activeColor: const Color(0xFF9AD7D8),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGender = value!;
+                          });
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: const Text('Female'),
+                        value: 'female',
+                        groupValue: selectedGender,
+                        activeColor: const Color(0xFFA2A3F3),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGender = value!;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                RadioListTile<String>(
+                  title: const Text('Prefer not to say'),
+                  value: 'prefer_not_to_say',
+                  groupValue: selectedGender,
+                  activeColor: const Color(0xFF9AD7D8),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedGender = value!;
+                    });
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: relationController,
-              decoration: const InputDecoration(
-                labelText: 'Relation',
-                hintText: 'E.g., Spouse, Child, Parent',
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ageController,
-              decoration: const InputDecoration(
-                labelText: 'Age',
-                hintText: 'Enter age',
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty && relationController.text.isNotEmpty && ageController.text.isNotEmpty) {
+                  this.setState(() {
+                    _familyMembers.add({
+                      'name': nameController.text,
+                      'relation': relationController.text,
+                      'age': int.parse(ageController.text),
+                      'avatar': Icons.person,
+                      'gender': selectedGender,
+                    });
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF9AD7D8),
               ),
-              keyboardType: TextInputType.number,
+              child: const Text('Add'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty && relationController.text.isNotEmpty && ageController.text.isNotEmpty) {
-                setState(() {
-                  _familyMembers.add({
-                    'name': nameController.text,
-                    'relation': relationController.text,
-                    'age': int.parse(ageController.text),
-                    'avatar': Icons.person,
-                  });
-                });
-                Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF9AD7D8),
-            ),
-            child: const Text('Add'),
-          ),
-        ],
       ),
     );
   }
@@ -367,65 +445,122 @@ class _FamilyScreenState extends State<FamilyScreen> {
     final nameController = TextEditingController(text: member['name']);
     final relationController = TextEditingController(text: member['relation']);
     final ageController = TextEditingController(text: member['age'].toString());
+    String selectedGender = member['gender'] ?? 'prefer_not_to_say';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Family Member'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-              ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Edit Family Member'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: relationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Relation',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: ageController,
+                  decoration: const InputDecoration(
+                    labelText: 'Age',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Gender',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: const Text('Male'),
+                        value: 'male',
+                        groupValue: selectedGender,
+                        activeColor: const Color(0xFF9AD7D8),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGender = value!;
+                          });
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: const Text('Female'),
+                        value: 'female',
+                        groupValue: selectedGender,
+                        activeColor: const Color(0xFFA2A3F3),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGender = value!;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                RadioListTile<String>(
+                  title: const Text('Prefer not to say'),
+                  value: 'prefer_not_to_say',
+                  groupValue: selectedGender,
+                  activeColor: const Color(0xFF9AD7D8),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedGender = value!;
+                    });
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: relationController,
-              decoration: const InputDecoration(
-                labelText: 'Relation',
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ageController,
-              decoration: const InputDecoration(
-                labelText: 'Age',
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty && relationController.text.isNotEmpty && ageController.text.isNotEmpty) {
+                  this.setState(() {
+                    final index = _familyMembers.indexOf(member);
+                    if (index != -1) {
+                      _familyMembers[index] = {
+                        'name': nameController.text,
+                        'relation': relationController.text,
+                        'age': int.parse(ageController.text),
+                        'avatar': member['avatar'],
+                        'gender': selectedGender,
+                      };
+                    }
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF9AD7D8),
               ),
-              keyboardType: TextInputType.number,
+              child: const Text('Save'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty && relationController.text.isNotEmpty && ageController.text.isNotEmpty) {
-                setState(() {
-                  final index = _familyMembers.indexOf(member);
-                  if (index != -1) {
-                    _familyMembers[index] = {
-                      'name': nameController.text,
-                      'relation': relationController.text,
-                      'age': int.parse(ageController.text),
-                      'avatar': member['avatar'],
-                    };
-                  }
-                });
-                Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF9AD7D8),
-            ),
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
