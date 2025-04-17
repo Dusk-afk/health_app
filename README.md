@@ -64,11 +64,20 @@ A Flutter-based mobile app that centralizes and simplifies home healthcare. From
 
 ## 🛠️ Tech Stack
 
+### Frontend
 - **Flutter** – Cross-platform UI
 - **Dart** – Language used
-- **Dio** – For handling API calls
 - **Provider** – For state management
-- **REST APIs** – Backend communication
+
+### Backend
+- **Python** – Server-side language
+- **Flask** – Web framework for the API
+- **SQLAlchemy** – ORM for database operations
+- **Docker** – Containerization for easy deployment
+
+### Communication
+- **REST APIs** – Frontend-backend communication
+- **Dio** – HTTP client for API calls
 
 ---
 ## 🧪 Getting Started
@@ -78,6 +87,8 @@ A Flutter-based mobile app that centralizes and simplifies home healthcare. From
 - Flutter SDK installed
 - Android Studio / Xcode / VS Code
 - Emulator or physical device
+- Python 3.8+ installed (for server)
+- Docker and Docker Compose (optional, for containerized server)
 
 ### Steps
 
@@ -91,12 +102,29 @@ git clone https://github.com/Dusk-afk/well_nest.git
 cd well_nest
 ```
 
-3. Install dependencies
+3. Install Flutter dependencies
 ```bash
 flutter pub get
 ```
 
-4. Run the app
+4. Start the backend server
+
+Option A: Direct Python execution
+```bash
+cd server
+pip install -r requirements.txt
+python app.py
+```
+
+Option B: Using Docker
+```bash
+cd server
+docker-compose up -d
+```
+
+5. Run the Flutter app
 ```bash
 flutter run
 ```
+
+The server will be available at http://localhost:5000
