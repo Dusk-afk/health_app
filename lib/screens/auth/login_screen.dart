@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // App Name
                   Text(
-                    'Health App',
+                    'WellNest',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,

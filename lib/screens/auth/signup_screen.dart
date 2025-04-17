@@ -110,7 +110,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   // App Name
                   Text(
-                    'Health App',
+                    'WellNest',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 24,

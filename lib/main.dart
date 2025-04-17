@@ -4,23 +4,23 @@ import 'screens/main/main_screen.dart';
 import 'services/api/auth_service.dart';
 
 void main() {
-  runApp(const HealthApp());
+  runApp(const WellNestApp());
 }
 
-class HealthApp extends StatefulWidget {
-  const HealthApp({super.key});
+class WellNestApp extends StatefulWidget {
+  const WellNestApp({super.key});
 
   @override
-  State<HealthApp> createState() => _HealthAppState();
+  State<WellNestApp> createState() => _WellNestAppState();
 }
 
-class _HealthAppState extends State<HealthApp> {
+class _WellNestAppState extends State<WellNestApp> {
   final Future<bool> _isAuthenticated = AuthService.instance.isAuthenticated();
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Health App',
+      title: 'WellNest',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -60,7 +60,6 @@ class _HealthAppState extends State<HealthApp> {
       ),
       routes: {
         '/': (context) => const SplashScreen(),
-        // '/login': (c) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/main': (context) => const MainScreen(),
       },
@@ -84,17 +83,19 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthentication() async {
-
     await Future.delayed(const Duration(milliseconds: 1500));
-    
-    // Check if user is already logged in
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // Check if user is already logged in// Check if user is already logged in
     final bool isAuthenticated = await AuthService.instance.isAuthenticated();
 
     if (!mounted) return;
-    
-    // Navigate to appropriate screen
+    if (!mounted) return;
+
+    // Navigate to appropriate screen// Navigate to appropriate screen
     Navigator.pushReplacementNamed(
       context,
+
       ///logout
       ///logging
       isAuthenticated ? '/main' : '/login',
@@ -116,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Health App',
+              'WellNest',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
