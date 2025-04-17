@@ -1,4 +1,8 @@
-# 🩺 Unified Platform – Your Digital Healthcare Companion
+<p align="center">
+  <img src=".github/assets/logo.png" width="200" alt="WellNest Logo" />
+</p>
+
+# 🩺 WellNest – Your Family's Wellness, All in One Nest
 
 A Flutter-based mobile app that centralizes and simplifies home healthcare. From managing digital health records to sending smart alerts, this app ensures proactive care for every family member.
 
@@ -6,23 +10,55 @@ A Flutter-based mobile app that centralizes and simplifies home healthcare. From
 
 ## 🚀 Features
 
-### 📁 Health Records
-- Organize prescriptions, medical reports, and scans.
-- Maintain a lifelong digital vault for each family member.
-- Share records easily with doctors during emergencies.
+### Health History Vault
+- Securely store and manage the full medical history of all family members
+- Generate comprehensive health reports for healthcare provider visits
 
-### 🔔 Smart Alerts
-- Receive timely reminders and alerts.
-- Stay on top of appointments, medications, and important updates.
+### Patient Smart Planner
+- Track meds, tests, inventory, and treatments for ongoing conditions
+- Receive intelligent scheduling suggestions based on treatment history
 
-### 📲 Easy Access
-- View health data anytime, anywhere.
-- Role-based access for secure family member control.
-- Intuitive UI for users of all ages—from 18 to 80.
+### Health Connect Integration
+- Sync real-time vitals like heart rate, SpO2, and steps from Google Fit and Apple Health
+- Visualize health trends with intuitive charts and personalized insights
 
-### ⚙️ Centrally Managed
-- All health data unified in one place.
-- Designed for proactive and preventive care.
+### Online Health Consultancy
+- Instantly consult doctors via chat or video, without third-party apps
+- Access specialist referrals and second opinions through our verified network
+
+### Mental Health Bot
+- AI companion for mood tracking, coping tips, and emotional check-ins
+- Practice guided meditation and mindfulness exercises tailored to your needs
+
+### Medical Document Upload
+- Upload, organize, and access health documents anytime, anywhere
+- Secure document sharing with customizable privacy controls for healthcare providers
+
+### Smart Health Alerts
+- Get timely alerts on missed meds, critical vitals, or upcoming checkups
+- Receive personalized health recommendations based on your family's health patterns
+
+---
+
+## 📱 Screenshots
+
+<p align="center">
+  <img src=".github/assets/1.png" width="250" alt="Screenshot 1" />
+  <img src=".github/assets/2.png" width="250" alt="Screenshot 2" />
+  <img src=".github/assets/3.png" width="250" alt="Screenshot 3" />
+</p>
+
+<p align="center">
+  <img src=".github/assets/4.png" width="250" alt="Screenshot 4" />
+  <img src=".github/assets/5.png" width="250" alt="Screenshot 5" />
+  <img src=".github/assets/6.png" width="250" alt="Screenshot 6" />
+</p>
+
+<p align="center">
+  <img src=".github/assets/7.png" width="250" alt="Screenshot 7" />
+  <img src=".github/assets/8.png" width="250" alt="Screenshot 8" />
+  <img src=".github/assets/9.png" width="250" alt="Screenshot 9" />
+</p>
 
 ---
 
@@ -31,15 +67,10 @@ A Flutter-based mobile app that centralizes and simplifies home healthcare. From
 - **Flutter** – Cross-platform UI
 - **Dart** – Language used
 - **Dio** – For handling API calls
-- **Provider / Riverpod** *(optional)* – For state management
+- **Provider** – For state management
 - **REST APIs** – Backend communication
 
 ---
-
-## 📦 Folder Structure
-
----
-
 ## 🧪 Getting Started
 
 ### Prerequisites
@@ -50,8 +81,22 @@ A Flutter-based mobile app that centralizes and simplifies home healthcare. From
 
 ### Steps
 
+1. Clone the repo
 ```bash
-cd health_app
+git clone https://github.com/Dusk-afk/well_nest.git
+```
+
+2. Navigate to the project directory
+```bash
+cd well_nest
+```
+
+3. Install dependencies
+```bash
 flutter pub get
-http://localhost:8000/api
+```
+
+4. Run the app
+```bash
 flutter run
+```
