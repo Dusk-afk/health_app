@@ -9,11 +9,19 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  dio: ^5.4.0  # HTTP client for API calls
+  health: ^8.1.0  # For health data
+  json_annotation: ^4.8.1  # For JSON serialization
+  flutter_secure_storage: ^9.0.0  # For secure storage of tokens
+  jwt_decoder: ^2.0.1  # For JWT token handling
+  provider: ^6.0.5  # For state management
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  build_runner: ^2.4.8  # For code generation
+  json_serializable: ^6.7.1  # For JSON serialization code generation
 
 flutter:
   uses-material-design: true
