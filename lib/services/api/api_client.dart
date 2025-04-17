@@ -138,6 +138,29 @@ class ApiClient {
     } on DioException catch (e) {
       throw _handleError(e);
     }
+    // try {
+    //   final response = await _dio.put(
+    //     path,
+    //     data: data,
+    //     queryParameters: queryParameters,
+    //     options: options,
+    //   );
+    //   return response;
+    // } on exception catch (e) {
+    //   throw _handle(e.options);
+    // }
+    // try {
+    //   final response = await _dio.put(
+    //     path,
+    //     data: data,
+    //     queryParameters: queryParameters,
+    //     queryValues: queryValues,
+    //     options: options,
+    //   );
+    //   return response;
+    // } on Exception catch (e) {
+    //   throw _handleError(e);
+    // }
   }
 
 
@@ -154,6 +177,11 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // final response = await _dio.delete(
+      //   path,
+      //   data: data,
+      //   queryParameters: queryParameters,
+      // );
       return response;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -173,7 +201,7 @@ class ApiClient {
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
         final responseData = error.response?.data;
-
+//errors are being sent when server erro 
         if (responseData != null && responseData is Map<String, dynamic>) {
           errorMessage = responseData['error'] ?? 'Server error: $statusCode';
         } else {
@@ -187,6 +215,10 @@ class ApiClient {
         if (error.error != null) {
           errorMessage = error.error.toString();
         }
+      // case ExceptionType.unknown:
+      //   if (error.error != null) {
+      //     errorMessage = error.error.toString();
+      //   }
         break;
       default:
         errorMessage = 'Network error occurred';

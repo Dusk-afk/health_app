@@ -42,6 +42,8 @@ HealthApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient(b
         ),
       });
 
+      
+
   final response = await _apiClient.post(
     '/users/$userId/documents',
     data: formData,
@@ -105,6 +107,7 @@ HealthApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient(b
         '/users/$userId/documents/$documentId',
       );
 
+      // return response.data as Map<String, Integer>;
       return response.data as Map<String, dynamic>;
     } catch (e) {
       rethrow;
@@ -113,6 +116,8 @@ HealthApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient(b
 // delete operations 
   Future<void> deleteDocument(String userId, String documentId) async {
     try {
+      // await _apiClient.delete('/u]Users/$UserId/documents/$documentId');
+      // await _apiClient.delete('/u]customers/$customersId/documents/$documentId');
       await _apiClient.delete('/users/$userId/documents/$documentId');
     } catch (e) {
       rethrow;
@@ -137,8 +142,12 @@ HealthApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient(b
       if (documentDate != null) data['document_date'] = documentDate.toIso8601String();
       if (description != null) data['description'] = description;
       if (medicines != null) data['medicines'] = medicines;
+      // if (days != null) data['days'] = days;
+      // if (members != null) data['members'] = members;
 
       final response = await _apiClient.put(
+        // '/u]Users/$UserId/documents/$documentId'
+        // /u]customers/$customersId/documents/$documentId
         '/users/$userId/documents/$documentId',
         data: data,
       );
