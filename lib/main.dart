@@ -60,6 +60,7 @@ class _HealthAppState extends State<HealthApp> {
       ),
       routes: {
         '/': (context) => const SplashScreen(),
+        // '/login': (c) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/main': (context) => const MainScreen(),
       },
@@ -94,6 +95,8 @@ class _SplashScreenState extends State<SplashScreen> {
     // Navigate to appropriate screen
     Navigator.pushReplacementNamed(
       context,
+      ///logout
+      ///logging
       isAuthenticated ? '/main' : '/login',
     );
   }

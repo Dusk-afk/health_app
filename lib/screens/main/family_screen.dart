@@ -10,6 +10,7 @@ class FamilyScreen extends StatefulWidget {
 
 class _FamilyScreenState extends State<FamilyScreen> {
   // Sample family member data with Indian names and gender
+  //Ai genereated
   final List<Map<String, dynamic>> _familyMembers = [
     {
       'name': 'Priya',
@@ -112,6 +113,14 @@ class _FamilyScreenState extends State<FamilyScreen> {
               color: Colors.grey[600],
             ),
           ),
+          // const SizedBar(height: 8),
+          // Text(
+          //   'add details aboiut family members',
+          //   style: TextStyle(
+          //     fontSize: 16,
+          //     color: Colors.grey[200],
+          //   ),
+          // ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             icon: const Icon(Icons.add),
@@ -202,6 +211,13 @@ class _FamilyScreenState extends State<FamilyScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            // const Text(
+            //   'Add Details',
+            //   style: TextStyle(
+            //     fontSize: 18,
+            //     fontWeight: FontWeight.bold,
+            //   ),
+            // ),
             const SizedBox(height: 4),
             Text(
               'Create new profile',
@@ -313,6 +329,39 @@ class _FamilyScreenState extends State<FamilyScreen> {
             ),
           ],
         ),
+        // child: Column(
+        //   mainAxisAlignment: MainAxisAlignment.center,
+        //   children: [
+        //     Container(
+        //       padding: const EdgeInsets.all(2),
+        //       decoration: BoxDecoration(
+        //         gradient: LinearGradient(
+        //           colors: [avatarBorderColor, avatarBorderColor.withOpacity(0.7)],
+        //           begin: Alignment.topRight,
+        //           end: Alignment.bottomRight,
+        //         ),
+        //         shape: BoxShape.circle,
+        //       ),
+        //       ),
+        //     ),
+        //     const SizedBox(height: 16),
+        //     Text(
+        //       member['name'],
+        //       style: const TextStyle(
+        //         fontSize: 18,
+        //         fontWeight: FontWeight.bold,
+        //       ),
+        //     ),
+        //     const SizedBox(height: 4),
+        //     Text(
+        //       'Age: ${member['age']}',
+        //       style: TextStyle(
+        //         fontSize: 14,
+        //         color: Colors.grey[600],
+        //       ),
+        //     ),
+        //   ],
+        // ),
       ),
     );
   }
@@ -406,6 +455,65 @@ class _FamilyScreenState extends State<FamilyScreen> {
                       selectedGender = value!;
                     });
                   },
+              // children: [
+              //   const SizedBox(height: 16),
+              //   TextField(
+              //     controller: relationController,
+              //     decoration: const InputDecoration(
+              //       labelText: 'Relation',
+              //       hintText: 'E.g., Spouse, Child, Parent',
+              //     ),
+              //   ),
+              //   const SizedBox(height: 16),
+              //   TextField(
+              //     controller: ageController,
+              //     decoration: const InputDecoration(
+              //       labelText: 'Age',
+              //       hintText: 'Enter age',
+              //     ),
+              //     keyboardType: TextInputType.number,
+              //   ),
+              //   const SizedBox(height: 8),
+              //   Row(
+              //     children: [
+              //       Expanded(
+              //         child: RadioListTile<String>(
+              //           title: const Text('Male'),
+              //           value: 'male',
+              //           groupValue: selectedGender,
+              //           activeColor: const Color(0xFF9AD7D8),
+              //           onChanged: (value) {
+              //             setState(() {
+              //               selectedGender = value!;
+              //             });
+              //           },
+              //         ),
+              //       ),
+              //       Expanded(
+              //         child: RadioListTile<String>(
+              //           title: const Text('Female'),
+              //           value: 'female',
+              //           groupValue: selectedGender,
+              //           activeColor: const Color(0xFFA2A3F3),
+              //           onChanged: (value) {
+              //             setState(() {
+              //               selectedGender = value!;
+              //             });
+              //           },
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              //   RadioListTile<String>(
+              //     title: const Text('Prefer not to say'),
+              //     value: 'prefer_not_to_say',
+              //     groupValue: selectedGender,
+              //     activeColor: const Color(0xFF9AD7D8),
+              //     onChanged: (value) {
+              //       setState(() {
+              //         selectedGender = value!;
+              //       });
+              //     },
                 ),
               ],
             ),
@@ -441,6 +549,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
     );
   }
 
+//the section where the user can edit family member dialog 
   void _showEditFamilyMemberDialog(BuildContext context, Map<String, dynamic> member) {
     final nameController = TextEditingController(text: member['name']);
     final relationController = TextEditingController(text: member['relation']);

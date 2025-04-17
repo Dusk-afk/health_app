@@ -11,7 +11,9 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String? _userName;
   String? _userPhoneNumber;
+  // String? _userMembers;
   String? _userEmail;
+  // String? _userData;
   bool _isLoading = true;
 
   @override
@@ -48,6 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         content: const Text('Are you sure you want to logout?'),
         actions: [
           TextButton(
+            // print(logout);
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
@@ -56,6 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.of(context).pop();
               await AuthService.instance.logout();
               if (!mounted) return;
+              // print(mounted);
               Navigator.of(context).pushReplacementNamed('/login');
             },
             child: const Text('Logout'),
@@ -137,6 +141,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
+                          // Row(
+                          //   children: [
+                          //     CircleAvatar(
+                          //       radius: 40,
+                          //       backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          //       child: Icon(
+                          //         Icons.person,
+                          //         size: 40,
+                          //         color: Theme.of(context).colorScheme.primary,
+                          //       ),
+                          //     ),
+                          //     const SizedBox(width: 16),
+                          //     Expanded(
+                          //       child: Column(
+                          //         crossAxisAlignment: CrossAxisAlignment.start,
+                          //           if (_userPhoneNumber != null && _userPhoneNumber!.isNotEmpty) ...[
+                          //             const SizedBox(height: 6),
+                          //             Text(
+                          //               _userPhoneNumber!,
+                          //               style: TextStyle(
+                          //                 fontSize: 14,
+                          //                 color: Colors.grey[600],
+                          //               ),
+                          //             ),
+                          //           ],
+                          //           if (_userEmail != null && _userEmail!.isNotEmpty) ...[
+                          //             const SizedBox(height: 4),
+                          //             Text(
+                          //               _userEmail!,
+                          //               style: TextStyle(
+                          //                 fontSize: 14,
+                          //                 color: Colors.grey[600],
+                          //               ),
+                          //             ),
+                          //           ],
+                          //         ],
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: () {
@@ -145,8 +189,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 const SnackBar(content: Text('Edit Profile - Coming soon')),
                               );
                             },
+                            // icon: const Icon(Icons.edit),
+                            // label: const Text('Edit Profile'),
+                            // style: ElevatedButton.styleFrom(
+                            //   backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                            //   foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                            // ),
                             icon: const Icon(Icons.edit),
                             label: const Text('Edit Profile'),
+                            // label: const Text('Edit avatar'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                               foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -224,6 +275,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
 
+                  // ListName(
+                  // //   leading: const Icon(Icons.info),
+                  // //   title: const Text('About'),
+                  // //   onTap: () {
+                  // //     ScaffoldMessenger.of(context).showSnackBar(
+                  // //       const SnackBar(content: Text('About - Coming soon')),
+                  // //     );
+                  // //   },
+                  // // ),
                   ListTile(
                     leading: const Icon(Icons.info),
                     title: const Text('About'),
