@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api/auth_service.dart';
 import '../settings/settings_screen.dart';
+import 'home_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -12,7 +13,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   String? _userName;
-  
+
   @override
   void initState() {
     super.initState();
@@ -33,92 +34,11 @@ class _MainScreenState extends State<MainScreen> {
       _selectedIndex = index;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Health App'),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Colors.teal,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _userName ?? 'Loading...',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text(
-                    'Welcome to Health App',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.medical_services),
-              title: const Text('Medical Vault'),
-              selected: _selectedIndex == 0,
-              onTap: () {
-                _onItemTapped(0);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.monitor_heart),
-              title: const Text('Health Data'),
-              selected: _selectedIndex == 1,
-              onTap: () {
-                _onItemTapped(1);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.family_restroom),
-              title: const Text('Family Members'),
-              selected: _selectedIndex == 2,
-              onTap: () {
-                _onItemTapped(2);
-                Navigator.pop(context);
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              selected: _selectedIndex == 3,
-              onTap: () {
-                _onItemTapped(3);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
+      // App bar removed
       body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -126,16 +46,16 @@ class _MainScreenState extends State<MainScreen> {
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services),
-            label: 'Medical Vault',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.monitor_heart),
-            label: 'Health Data',
+            icon: Icon(Icons.home),
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.family_restroom),
             label: 'Family',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.medical_services),
+            label: 'Vault',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
@@ -145,11 +65,11 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
-  
+
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
-        return const Center(child: Text('Medical Vault - Coming Soon'));
+        return HomeScreen(userName: _userName);
       case 1:
         return const Center(child: Text('Health Data - Coming Soon'));
       case 2:
@@ -157,7 +77,7 @@ class _MainScreenState extends State<MainScreen> {
       case 3:
         return const SettingsScreen();
       default:
-        return const Center(child: Text('Medical Vault - Coming Soon'));
+        return HomeScreen(userName: _userName);
     }
   }
 }

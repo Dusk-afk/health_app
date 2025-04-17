@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(result['message'])),
           );
-          
+
           // Navigate to main screen
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Theme.of(context).primaryColor,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // App Name
                   Text(
                     'Health App',
@@ -103,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Error Message (if any)
                   if (_errorMessage != null) ...[
                     Container(
@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
-                  
+
                   // Phone Number Field
                   TextFormField(
                     controller: _phoneController,
@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Password Field
                   TextFormField(
                     controller: _passwordController,
@@ -179,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
-                  
+
                   // Forgot Password
                   Align(
                     alignment: Alignment.centerRight,
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Login Button
                   ElevatedButton(
                     onPressed: _isLoading ? null : _login,
@@ -219,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Sign Up Option
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

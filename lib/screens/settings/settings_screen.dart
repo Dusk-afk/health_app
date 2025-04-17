@@ -24,7 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _isLoading = true;
     });
-    
+
     final userData = await AuthService.instance.getUserData();
     if (mounted && userData != null) {
       setState(() {
@@ -156,9 +156,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // App Settings Section
                   const Text(
                     'App Settings',
@@ -168,7 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   ListTile(
                     leading: const Icon(Icons.notifications),
                     title: const Text('Notifications'),
@@ -179,7 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                     },
                   ),
-                  
+
                   ListTile(
                     leading: const Icon(Icons.language),
                     title: const Text('Language'),
@@ -201,9 +201,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                     },
                   ),
-                  
+
                   const Divider(),
-                  
+
                   // About and Support Section
                   const Text(
                     'About & Support',
@@ -213,7 +213,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   ListTile(
                     leading: const Icon(Icons.help),
                     title: const Text('Help & Support'),
@@ -223,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                     },
                   ),
-                  
+
                   ListTile(
                     leading: const Icon(Icons.info),
                     title: const Text('About'),
@@ -233,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                     },
                   ),
-                  
+
                   ListTile(
                     leading: const Icon(Icons.privacy_tip),
                     title: const Text('Privacy Policy'),
@@ -243,9 +243,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                     },
                   ),
-                  
+
                   const Divider(),
-                  
+
                   // Logout Button
                   ListTile(
                     leading: const Icon(Icons.logout, color: Colors.red),

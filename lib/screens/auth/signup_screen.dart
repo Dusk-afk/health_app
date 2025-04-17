@@ -43,10 +43,6 @@ class _SignupScreenState extends State<SignupScreen> {
       try {
         // Format phone number with international prefix if needed
         String phoneNumber = _phoneController.text.trim();
-        if (!phoneNumber.startsWith('+')) {
-          // Add India country code by default if not provided
-          phoneNumber = '+91$phoneNumber';
-        }
 
         final result = await AuthService.instance.signup(
           fullName: _nameController.text.trim(),
