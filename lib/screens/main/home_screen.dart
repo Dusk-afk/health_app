@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main/vitals/vitals_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String? userName;
@@ -82,12 +83,28 @@ class HomeScreen extends StatelessWidget {
             // Health Stats section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: const Text(
-                'Health Stats',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Health Stats',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const VitalsScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('View All'),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
