@@ -83,14 +83,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthentication() async {
-    // Small delay to show splash screen
-    await Future.delayed(const Duration(milliseconds: 1500));
 
+    await Future.delayed(const Duration(milliseconds: 1500));
+    
     // Check if user is already logged in
     final bool isAuthenticated = await AuthService.instance.isAuthenticated();
 
     if (!mounted) return;
-
+    
     // Navigate to appropriate screen
     Navigator.pushReplacementNamed(
       context,

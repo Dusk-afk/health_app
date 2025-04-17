@@ -2,17 +2,13 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'api_client.dart';
 
-/// Service for handling health-related API calls
+/// service for handling health-related API calls
 class HealthApiService {
   final ApiClient _apiClient;
 
-  /// Configuration for API endpoints
   static const String _baseUrl = 'http://localhost:8000/api';
+HealthApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient(baseUrl: _baseUrl);
 
-  /// Create a HealthApiService instance
-  HealthApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient(baseUrl: _baseUrl);
-
-  /// Get user's health profile
   Future<Map<String, dynamic>> getUserProfile(String userId) async {
     try {
       final response = await _apiClient.get('/users/$userId/profile');
@@ -22,7 +18,7 @@ class HealthApiService {
     }
   }
 
-  /// Upload health document to medical vault
+  ///pload health document to medical vault
   Future<Map<String, dynamic>> uploadDocument({
     required String userId,
     required String documentType,
@@ -33,26 +29,26 @@ class HealthApiService {
     List<String>? medicines,
   }) async {
     try {
-      // Create form data
+//fill form from data
       final formData = FormData.fromMap({
         'document_type': documentType,
-        'document_name': documentName,
-        'document_date': documentDate.toIso8601String(),
+    'document_name': documentName,
+    'document_date': documentDate.toIso8601String(),
         'description': description ?? '',
-        'medicines': medicines ?? [],
+    'medicines': medicines ?? [],
         'file': MultipartFile.fromBytes(
           fileBytes,
           filename: documentName,
         ),
       });
 
-      final response = await _apiClient.post(
-        '/users/$userId/documents',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-        ),
-      );
+  final response = await _apiClient.post(
+    '/users/$userId/documents',
+    data: formData,
+    options: Options(
+      contentType: 'multipart/form-data',
+    ),
+  );
 
       return response.data as Map<String, dynamic>;
     } catch (e) {
@@ -60,14 +56,14 @@ class HealthApiService {
     }
   }
 
-  /// Get list of user's documents from medical vault
-  Future<List<Map<String, dynamic>>> getUserDocuments(
-    String userId, {
-    String? documentType,
-    DateTime? startDate,
-    DateTime? endDate,
-    int page = 1,
-    int limit = 20,
+  /// getting list of user's documents from medical vault
+        Future<List<Map<String, dynamic>>> getUserDocuments(
+      String userId, {
+      String? documentType,
+      DateTime? startDate,
+      DateTime? endDate,
+      int page = 1,
+      int limit = 20,
   }) async {
     try {
       final Map<String, dynamic> queryParams = {
@@ -99,7 +95,7 @@ class HealthApiService {
     }
   }
 
-  /// Get specific document details
+  /// Gget doc details
   Future<Map<String, dynamic>> getDocumentDetails(
     String userId,
     String documentId,
@@ -114,8 +110,7 @@ class HealthApiService {
       rethrow;
     }
   }
-
-  /// Delete a document from medical vault
+// delete operations 
   Future<void> deleteDocument(String userId, String documentId) async {
     try {
       await _apiClient.delete('/users/$userId/documents/$documentId');
@@ -124,7 +119,7 @@ class HealthApiService {
     }
   }
 
-  /// Update document metadata
+//  //updating the doc 
   Future<Map<String, dynamic>> updateDocumentMetadata(
     String userId,
     String documentId, {

@@ -6,41 +6,35 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import '../../config/env_config.dart';
 import 'api_client.dart';
 
-/// Service for handling authentication with the API
+
 class AuthService {
   late final ApiClient _apiClient;
   final FlutterSecureStorage _secureStorage;
 
-  // Keys for secure storage
+
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userDataKey = 'user_data';
+static final int _tokenRefreshThreshold = EnvConfig.tokenRefreshThreshold;
+static AuthService? _instance;
 
-  // Token refresh configuration from env config
-  static final int _tokenRefreshThreshold = EnvConfig.tokenRefreshThreshold;
-
-  // Singleton instance
-  static AuthService? _instance;
-
-  // Stream controller for authentication state changes
   final _authStateController = StreamController<bool>.broadcast();
 
-  /// Get the singleton instance of AuthService
+
+  /// get single insta nce of authservice 
   static AuthService get instance {
     _instance ??= AuthService._internal();
+    /// return _intance ;
     return _instance!;
   }
-
-  /// Private constructor
   AuthService._internal() : _secureStorage = const FlutterSecureStorage() {
-    // Create API client without auth requirements for login/signup endpoints
+    //api client created here !!!
     _apiClient = ApiClient(baseUrl: EnvConfig.apiUrl);
   }
 
-  /// Stream of authentication state (true if authenticated, false if not)
+  /// toggl e is done here 
   Stream<bool> get authStateChanges => _authStateController.stream;
 
-  /// Check if user is authenticated
   Future<bool> isAuthenticated() async {
     final accessToken = await _secureStorage.read(key: _accessTokenKey);
     if (accessToken == null) return false;
@@ -48,25 +42,24 @@ class AuthService {
     try {
       final bool isExpired = JwtDecoder.isExpired(accessToken);
 
-      // If token is expired, try to refresh it
+
       if (isExpired) {
+        //if the token gets expired or something... then refresh the token 
         return await refreshToken();
       }
-
-      // Check if token needs refresh (less than threshold time remaining)
+      // threshold time 
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
       final int expiryTimestamp = decodedToken['exp'];
       final int currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       final int timeRemaining = expiryTimestamp - currentTimestamp;
 
       if (timeRemaining < _tokenRefreshThreshold) {
-        // Try to refresh the token in the background
         refreshToken();
       }
 
       return true;
     } catch (e) {
-      // If there's any error decoding the token, assume it's invalid
+      // for error detection 
       return false;
     }
   }
@@ -90,12 +83,12 @@ class AuthService {
 
       return {'success': false, 'message': 'Login failed. Please check your credentials.'};
     } catch (e) {
-      // The ApiClient already handles DioException and converts it to a proper error message
+
       return {'success': false, 'message': e.toString().replaceAll('Exception: ', '')};
     }
   }
 
-  /// Sign up with name, phone number, and password
+  /// sign in happen there 
   Future<Map<String, dynamic>> signup({
     required String fullName,
     required String phoneNumber,
@@ -126,12 +119,12 @@ class AuthService {
 
       return {'success': false, 'message': 'Failed to create account'};
     } catch (e) {
-      // The ApiClient already handles DioException and converts it to a proper error message
+      // handling exceptinon with
       return {'success': false, 'message': e.toString().replaceAll('Exception: ', '')};
     }
   }
 
-  /// Log out the current user
+  /// loggg out 
   Future<void> logout() async {
     await _secureStorage.delete(key: _accessTokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);
@@ -139,17 +132,18 @@ class AuthService {
     _authStateController.add(false);
   }
 
-  /// Get the current user data
+  /// fetch curr user data 
   Future<Map<String, dynamic>?> getUserData() async {
     try {
-      // First check if we have user data in secure storage
+      // secure storage mein hai data??
+
       final cachedUserData = await _secureStorage.read(key: _userDataKey);
 
       if (cachedUserData != null) {
         return json.decode(cachedUserData) as Map<String, dynamic>;
       }
 
-      // If not, fetch from API if authenticated
+      // fetch tabhi when it is authenticated 
       if (await isAuthenticated()) {
         final token = await getAccessToken();
 
@@ -168,12 +162,11 @@ class AuthService {
 
       return null;
     } catch (e) {
-      // Just return null if there's an error, but could log the error here
       return null;
     }
   }
 
-  /// Refresh the access token using the refresh token
+  /// refresh karne ka function using refresh token  (token ko refresh)
   Future<bool> refreshToken() async {
     final refreshToken = await _secureStorage.read(key: _refreshTokenKey);
     if (refreshToken == null) return false;
@@ -190,13 +183,13 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      // If refresh token is invalid, clear all tokens and logout
+      // agar token is invlaid remove all the tokens 
       await logout();
       return false;
     }
   }
 
-  /// Get the access token for API requests
+  //getting access token for api
   Future<String?> getAccessToken() async {
     if (!await isAuthenticated()) {
       return null;
@@ -205,7 +198,7 @@ class AuthService {
     return await _secureStorage.read(key: _accessTokenKey);
   }
 
-  /// Handle authentication response from login or token refresh
+  /// Handle auth response 
   Future<void> _handleAuthResponse(Map<String, dynamic> data) async {
     final accessToken = data['access_token'];
     final refreshToken = data['refresh_token'];
