@@ -4,7 +4,8 @@ class EnvConfig {
   EnvConfig._();
 
   /// Base URL for API requests
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  // static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = 'https://e1e2-2409-40d0-2004-114f-9156-938e-a87f-3954.ngrok-free.app';
 
   /// API version path
   static const String apiVersion = '/api/v1';

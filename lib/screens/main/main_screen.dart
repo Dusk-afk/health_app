@@ -3,6 +3,7 @@ import '../../services/api/auth_service.dart';
 import '../settings/settings_screen.dart';
 import 'home_screen.dart';
 import 'family_screen.dart';
+import 'health_dashboard.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -55,6 +56,10 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Family',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.health_and_safety),
+            label: 'Health',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.medical_services),
             label: 'Vault',
           ),
@@ -74,8 +79,10 @@ class _MainScreenState extends State<MainScreen> {
       case 1:
         return const FamilyScreen();
       case 2:
-        return const Center(child: Text('Health Vault - Coming Soon'));
+        return const HealthDashboard();
       case 3:
+        return const Center(child: Text('Health Vault - Coming Soon'));
+      case 4:
         return const SettingsScreen();
       default:
         return HomeScreen(userName: _userName);

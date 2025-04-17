@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:well_nest/services/providers/vitals_provider.dart';
 import '../main/vitals/vitals_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -11,6 +13,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final vitalsProvider = context.watch<VitalsProvider>();
+
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
@@ -118,9 +122,9 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _buildHealthCard(
                     context,
-                    'Breath Rate',
-                    '16',
-                    'breaths/min',
+                    'Steps',
+                    vitalsProvider.totalSteps.toString(),
+                    'steps',
                     Icons.air,
                     Color(0xFFD0D1FF),
                     Color(0xFFA2A3F3),
@@ -128,7 +132,7 @@ class HomeScreen extends StatelessWidget {
                   _buildHealthCard(
                     context,
                     'Heart Rate',
-                    '72',
+                    vitalsProvider.averageHeartRate.toInt().toString(),
                     'bpm',
                     Icons.favorite,
                     Color(0xFFC9EBED),
@@ -137,7 +141,7 @@ class HomeScreen extends StatelessWidget {
                   _buildHealthCard(
                     context,
                     'Blood Pressure',
-                    '120/80',
+                    vitalsProvider.averageSystolic.toString(),
                     'mmHg',
                     Icons.opacity,
                     Color(0xFFF3DFDE),

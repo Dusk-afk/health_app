@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import 'package:well_nest/services/providers/vitals_provider.dart';
+import 'package:intl/intl.dart';
 
 class VitalsScreen extends StatefulWidget {
   const VitalsScreen({super.key});
@@ -11,50 +14,51 @@ class VitalsScreen extends StatefulWidget {
 class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Sample data for heart rate
-  final List<FlSpot> heartRateData = [
-    FlSpot(0, 72),
-    FlSpot(1, 74),
-    FlSpot(2, 78),
-    FlSpot(3, 80),
-    FlSpot(4, 75),
-    FlSpot(5, 73),
-    FlSpot(6, 72),
-  ];
+  // Day labels for the x-axis
+  List<String> dayLabels = [];
 
-  // Sample data for blood pressure
-  final List<FlSpot> systolicData = [
-    FlSpot(0, 120),
-    FlSpot(1, 122),
-    FlSpot(2, 118),
-    FlSpot(3, 121),
-    FlSpot(4, 119),
-    FlSpot(5, 123),
-    FlSpot(6, 120),
-  ];
-
-  final List<FlSpot> diastolicData = [
-    FlSpot(0, 80),
-    FlSpot(1, 82),
-    FlSpot(2, 78),
-    FlSpot(3, 81),
-    FlSpot(4, 79),
-    FlSpot(5, 83),
-    FlSpot(6, 80),
-  ];
-
-  // Sample data for SPO2
-  final List<double> spo2Data = [97, 98, 96, 97, 99, 98, 97];
-
-  // Sample data for water intake
-  final List<double> waterData = [2000, 2200, 1800, 2500, 2300, 1900, 2100];
-
-  final List<String> days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  // Tracking loading state
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    // Update TabController to have 5 tabs instead of 4
+    _tabController = TabController(length: 5, vsync: this);
+
+    // Fetch data when screen initializes
+    _refreshData();
+
+    // Set up day labels
+    _setupDayLabels();
+  }
+
+  // Setup day labels for the x-axis of charts
+  void _setupDayLabels() {
+    final now = DateTime.now();
+    dayLabels = List.generate(7, (index) {
+      final day = now.subtract(Duration(days: 6 - index));
+      return DateFormat('E').format(day); // Short day name (Mon, Tue, etc.)
+    });
+  }
+
+  // Refresh data from the provider
+  Future<void> _refreshData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Get the provider without listening
+      final vitalsProvider = Provider.of<VitalsProvider>(context, listen: false);
+      await vitalsProvider.refreshHealthData();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -68,10 +72,17 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
     return Scaffold(
       appBar: AppBar(
         title: const Text('Health Vitals'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _refreshData,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
           tabs: const [
+            Tab(text: 'Steps'),
             Tab(text: 'Heart Rate'),
             Tab(text: 'Blood Pressure'),
             Tab(text: 'Oxygen (SPO2)'),
@@ -79,19 +90,144 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildStepsTab(),
+                _buildHeartRateTab(),
+                _buildBloodPressureTab(),
+                _buildSpo2Tab(),
+                _buildWaterIntakeTab(),
+              ],
+            ),
+    );
+  }
+
+  // New method to build the Steps tab
+  Widget _buildStepsTab() {
+    final vitalsProvider = Provider.of<VitalsProvider>(context);
+
+    // Convert steps data to chart format
+    final stepsData = _convertStepsDataToChartFormat(vitalsProvider);
+
+    // Calculate weekly total and average
+    final dailyStepsMap = vitalsProvider.dailySteps;
+
+    // Calculate average steps per day
+    int totalDaySteps = 0;
+    int dayCount = 0;
+
+    dailyStepsMap.forEach((date, steps) {
+      final daysAgo = DateTime.now().difference(date).inDays;
+      if (daysAgo < 7) {
+        totalDaySteps += steps;
+        dayCount++;
+      }
+    });
+
+    final avgSteps = dayCount > 0 ? (totalDaySteps / dayCount).toInt() : 0;
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeartRateTab(),
-          _buildBloodPressureTab(),
-          _buildSpo2Tab(),
-          _buildWaterIntakeTab(),
+          const Text(
+            'Weekly Steps Count',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            'Average: $avgSteps steps/day',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: stepsData.isEmpty
+                ? Center(child: Text('No steps data available'))
+                : BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: _calculateMaxStepsY(vitalsProvider),
+                      minY: 0,
+                      groupsSpace: 12,
+                      barTouchData: BarTouchData(
+                        enabled: true,
+                        touchTooltipData: BarTouchTooltipData(
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            final value = stepsData.containsKey(groupIndex) ? stepsData[groupIndex]! : 0;
+                            return BarTooltipItem(
+                              '${dayLabels[groupIndex]}: $value steps',
+                              const TextStyle(color: Colors.white),
+                            );
+                          },
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              final index = value.toInt();
+                              if (index >= 0 && index < dayLabels.length) {
+                                return Text(dayLabels[index]);
+                              }
+                              return const Text('');
+                            },
+                            reservedSize: 30,
+                          ),
+                        ),
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                      ),
+                      gridData: FlGridData(
+                        show: true,
+                        drawHorizontalLine: true,
+                        drawVerticalLine: false,
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: const Border(
+                          bottom: BorderSide(color: Colors.grey),
+                          left: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                      barGroups: _getStepsBarGroups(stepsData, Color(0xFFA2A3F3)),
+                    ),
+                  ),
+          ),
+          // Weekly goal progress indicator removed
         ],
       ),
     );
   }
 
   Widget _buildHeartRateTab() {
+    final vitalsProvider = Provider.of<VitalsProvider>(context);
+
+    // Convert heart rate data to chart format
+    final heartRateData = _convertHeartRateDataToChartFormat(vitalsProvider);
+
+    // Calculate average
+    final avgHeartRate = vitalsProvider.averageHeartRate.toStringAsFixed(0);
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -104,8 +240,8 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
               fontWeight: FontWeight.bold,
             ),
           ),
-          const Text(
-            'Average: 75 bpm',
+          Text(
+            'Average: $avgHeartRate bpm',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey,
@@ -113,65 +249,68 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
           ),
           const SizedBox(height: 24),
           Expanded(
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawHorizontalLine: true,
-                  drawVerticalLine: false,
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
+            child: heartRateData.isEmpty
+                ? Center(child: Text('No heart rate data available'))
+                : LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
+                        show: true,
+                        drawHorizontalLine: true,
+                        drawVerticalLine: false,
+                      ),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              final index = value.toInt();
+                              if (index >= 0 && index < dayLabels.length) {
+                                return Text(dayLabels[index]);
+                              }
+                              return const Text('');
+                            },
+                            reservedSize: 30,
+                          ),
+                        ),
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: const Border(
+                          bottom: BorderSide(color: Colors.grey),
+                          left: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: heartRateData,
+                          isCurved: true,
+                          color: Colors.red,
+                          barWidth: 4,
+                          dotData: FlDotData(show: true),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: Colors.red.withOpacity(0.2),
+                          ),
+                        ),
+                      ],
+                      minX: 0,
+                      maxX: dayLabels.length - 1.0,
+                      minY: _calculateMinY(heartRateData, 60),
+                      maxY: _calculateMaxY(heartRateData, 100),
                     ),
                   ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (value >= 0 && value < days.length) {
-                          return Text(days[value.toInt()]);
-                        }
-                        return const Text('');
-                      },
-                      reservedSize: 30,
-                    ),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: const Border(
-                    bottom: BorderSide(color: Colors.grey),
-                    left: BorderSide(color: Colors.grey),
-                  ),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: heartRateData,
-                    isCurved: true,
-                    color: Colors.red,
-                    barWidth: 4,
-                    dotData: FlDotData(show: true),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: Colors.red.withOpacity(0.2),
-                    ),
-                  ),
-                ],
-                minX: 0,
-                maxX: 6,
-                minY: 60,
-                maxY: 100,
-              ),
-            ),
           ),
         ],
       ),
@@ -179,6 +318,16 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
   }
 
   Widget _buildBloodPressureTab() {
+    final vitalsProvider = Provider.of<VitalsProvider>(context);
+
+    // Convert blood pressure data to chart format
+    final systolicData = _convertBloodPressureDataToChartFormat(vitalsProvider, true);
+    final diastolicData = _convertBloodPressureDataToChartFormat(vitalsProvider, false);
+
+    // Calculate averages
+    final avgSystolic = vitalsProvider.averageSystolic.toStringAsFixed(0);
+    final avgDiastolic = vitalsProvider.averageDiastolic.toStringAsFixed(0);
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -191,8 +340,8 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
               fontWeight: FontWeight.bold,
             ),
           ),
-          const Text(
-            'Average: 120/80 mmHg',
+          Text(
+            'Average: $avgSystolic/$avgDiastolic mmHg',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey,
@@ -200,76 +349,79 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
           ),
           const SizedBox(height: 24),
           Expanded(
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawHorizontalLine: true,
-                  drawVerticalLine: false,
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
+            child: (systolicData.isEmpty && diastolicData.isEmpty)
+                ? Center(child: Text('No blood pressure data available'))
+                : LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
+                        show: true,
+                        drawHorizontalLine: true,
+                        drawVerticalLine: false,
+                      ),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              final index = value.toInt();
+                              if (index >= 0 && index < dayLabels.length) {
+                                return Text(dayLabels[index]);
+                              }
+                              return const Text('');
+                            },
+                            reservedSize: 30,
+                          ),
+                        ),
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: const Border(
+                          bottom: BorderSide(color: Colors.grey),
+                          left: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: systolicData,
+                          isCurved: true,
+                          color: Colors.blue,
+                          barWidth: 4,
+                          dotData: FlDotData(show: true),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: Colors.blue.withOpacity(0.2),
+                          ),
+                        ),
+                        LineChartBarData(
+                          spots: diastolicData,
+                          isCurved: true,
+                          color: Colors.green,
+                          barWidth: 4,
+                          dotData: FlDotData(show: true),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: Colors.green.withOpacity(0.2),
+                          ),
+                        ),
+                      ],
+                      minX: 0,
+                      maxX: dayLabels.length - 1.0,
+                      minY: 60,
+                      maxY: 160,
                     ),
                   ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (value >= 0 && value < days.length) {
-                          return Text(days[value.toInt()]);
-                        }
-                        return const Text('');
-                      },
-                      reservedSize: 30,
-                    ),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: const Border(
-                    bottom: BorderSide(color: Colors.grey),
-                    left: BorderSide(color: Colors.grey),
-                  ),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: systolicData,
-                    isCurved: true,
-                    color: Colors.blue,
-                    barWidth: 4,
-                    dotData: FlDotData(show: true),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: Colors.blue.withOpacity(0.2),
-                    ),
-                  ),
-                  LineChartBarData(
-                    spots: diastolicData,
-                    isCurved: true,
-                    color: Colors.green,
-                    barWidth: 4,
-                    dotData: FlDotData(show: true),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: Colors.green.withOpacity(0.2),
-                    ),
-                  ),
-                ],
-                minX: 0,
-                maxX: 6,
-                minY: 60,
-                maxY: 140,
-              ),
-            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -306,6 +458,14 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
   }
 
   Widget _buildSpo2Tab() {
+    final vitalsProvider = Provider.of<VitalsProvider>(context);
+
+    // Get SPO2 data by day
+    final Map<int, double> spo2ByDay = _getSpo2DataByDay(vitalsProvider);
+
+    // Calculate average
+    final avgSpo2 = vitalsProvider.averageSpo2.toStringAsFixed(0);
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -318,8 +478,8 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
               fontWeight: FontWeight.bold,
             ),
           ),
-          const Text(
-            'Average: 97%',
+          Text(
+            'Average: $avgSpo2%',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey,
@@ -327,84 +487,68 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
           ),
           const SizedBox(height: 24),
           Expanded(
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 100,
-                minY: 90,
-                groupsSpace: 12,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    // tooltipBgColor: Colors.blueAccent,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      return BarTooltipItem(
-                        '${days[groupIndex]}: ${spo2Data[groupIndex]}%',
-                        const TextStyle(color: Colors.white),
-                      );
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (value >= 0 && value < days.length) {
-                          return Text(days[value.toInt()]);
-                        }
-                        return const Text('');
-                      },
-                      reservedSize: 30,
-                    ),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawHorizontalLine: true,
-                  drawVerticalLine: false,
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: const Border(
-                    bottom: BorderSide(color: Colors.grey),
-                    left: BorderSide(color: Colors.grey),
-                  ),
-                ),
-                barGroups: spo2Data.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final value = entry.value;
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: value,
-                        color: Colors.purple,
-                        width: 20,
-                        borderRadius: BorderRadius.circular(4),
-                        backDrawRodData: BackgroundBarChartRodData(
-                          show: true,
-                          toY: 100,
-                          color: Colors.grey[200],
+            child: spo2ByDay.isEmpty
+                ? Center(child: Text('No SPO2 data available'))
+                : BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: 100,
+                      minY: 90,
+                      groupsSpace: 12,
+                      barTouchData: BarTouchData(
+                        enabled: true,
+                        touchTooltipData: BarTouchTooltipData(
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            final value = spo2ByDay[groupIndex] ?? 0;
+                            return BarTooltipItem(
+                              '${dayLabels[groupIndex]}: ${value.toStringAsFixed(0)}%',
+                              const TextStyle(color: Colors.white),
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              final index = value.toInt();
+                              if (index >= 0 && index < dayLabels.length) {
+                                return Text(dayLabels[index]);
+                              }
+                              return const Text('');
+                            },
+                            reservedSize: 30,
+                          ),
+                        ),
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                      ),
+                      gridData: FlGridData(
+                        show: true,
+                        drawHorizontalLine: true,
+                        drawVerticalLine: false,
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: const Border(
+                          bottom: BorderSide(color: Colors.grey),
+                          left: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                      barGroups: _getBarGroups(spo2ByDay, Colors.purple),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -412,6 +556,22 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
   }
 
   Widget _buildWaterIntakeTab() {
+    final vitalsProvider = Provider.of<VitalsProvider>(context);
+
+    // Get water intake data by day
+    final Map<int, int> waterByDay = _getWaterIntakeByDay(vitalsProvider);
+
+    // Calculate average water intake
+    int totalWater = 0;
+    int dayCount = 0;
+
+    waterByDay.forEach((day, amount) {
+      totalWater += amount;
+      dayCount++;
+    });
+
+    final avgWater = dayCount > 0 ? (totalWater / dayCount).toStringAsFixed(0) : '0';
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -424,8 +584,8 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
               fontWeight: FontWeight.bold,
             ),
           ),
-          const Text(
-            'Average: 2100 ml/day',
+          Text(
+            'Average: $avgWater ml/day',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey,
@@ -433,87 +593,337 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
           ),
           const SizedBox(height: 24),
           Expanded(
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 3000,
-                minY: 0,
-                groupsSpace: 12,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    // tooltipBgColor: Colors.blueAccent,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      return BarTooltipItem(
-                        '${days[groupIndex]}: ${waterData[groupIndex].toInt()} ml',
-                        const TextStyle(color: Colors.white),
-                      );
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (value >= 0 && value < days.length) {
-                          return Text(days[value.toInt()]);
-                        }
-                        return const Text('');
-                      },
-                      reservedSize: 30,
-                    ),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawHorizontalLine: true,
-                  drawVerticalLine: false,
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: const Border(
-                    bottom: BorderSide(color: Colors.grey),
-                    left: BorderSide(color: Colors.grey),
-                  ),
-                ),
-                barGroups: waterData.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final value = entry.value;
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: value,
-                        color: Colors.blue,
-                        width: 20,
-                        borderRadius: BorderRadius.circular(4),
-                        backDrawRodData: BackgroundBarChartRodData(
-                          show: true,
-                          toY: 3000,
-                          color: Colors.grey[200],
+            child: waterByDay.isEmpty
+                ? Center(child: Text('No water intake data available'))
+                : BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: _calculateMaxWaterY(waterByDay),
+                      minY: 0,
+                      groupsSpace: 12,
+                      barTouchData: BarTouchData(
+                        enabled: true,
+                        touchTooltipData: BarTouchTooltipData(
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            final value = waterByDay[groupIndex] ?? 0;
+                            return BarTooltipItem(
+                              '${dayLabels[groupIndex]}: $value ml',
+                              const TextStyle(color: Colors.white),
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              final index = value.toInt();
+                              if (index >= 0 && index < dayLabels.length) {
+                                return Text(dayLabels[index]);
+                              }
+                              return const Text('');
+                            },
+                            reservedSize: 30,
+                          ),
+                        ),
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                      ),
+                      gridData: FlGridData(
+                        show: true,
+                        drawHorizontalLine: true,
+                        drawVerticalLine: false,
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: const Border(
+                          bottom: BorderSide(color: Colors.grey),
+                          left: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                      barGroups: _getIntBarGroups(waterByDay, Colors.blue),
+                    ),
+                  ),
           ),
         ],
       ),
     );
+  }
+
+  // Helper method to convert heart rate data to chart format
+  List<FlSpot> _convertHeartRateDataToChartFormat(VitalsProvider provider) {
+    final heartRateMap = provider.heartRate;
+    final now = DateTime.now();
+    final spots = <FlSpot>[];
+
+    // Create a map to group heart rate by day
+    final Map<int, List<double>> heartRatesByDay = {};
+
+    // Initialize the map with empty lists for all 7 days
+    for (int i = 0; i < 7; i++) {
+      heartRatesByDay[i] = [];
+    }
+
+    // Group heart rates by day (last 7 days)
+    heartRateMap.forEach((timestamp, value) {
+      final daysAgo = now.difference(timestamp).inDays;
+      if (daysAgo >= 0 && daysAgo < 7) {
+        final dayIndex = 6 - daysAgo; // Convert to chart index (most recent day is last)
+        heartRatesByDay[dayIndex]?.add(value);
+      }
+    });
+
+    // Calculate average heart rate for each day
+    heartRatesByDay.forEach((dayIndex, rates) {
+      if (rates.isNotEmpty) {
+        final avgRate = rates.reduce((a, b) => a + b) / rates.length;
+        spots.add(FlSpot(dayIndex.toDouble(), avgRate));
+      }
+    });
+
+    return spots;
+  }
+
+  // Helper method to convert blood pressure data to chart format
+  List<FlSpot> _convertBloodPressureDataToChartFormat(VitalsProvider provider, bool isSystolic) {
+    final bpMap = isSystolic ? provider.bloodPressureSystolic : provider.bloodPressureDiastolic;
+    final now = DateTime.now();
+    final spots = <FlSpot>[];
+
+    // Create a map to group blood pressure by day
+    final Map<int, List<double>> bpByDay = {};
+
+    // Initialize the map with empty lists for all 7 days
+    for (int i = 0; i < 7; i++) {
+      bpByDay[i] = [];
+    }
+
+    // Group blood pressure by day (last 7 days)
+    bpMap.forEach((timestamp, value) {
+      final daysAgo = now.difference(timestamp).inDays;
+      if (daysAgo >= 0 && daysAgo < 7) {
+        final dayIndex = 6 - daysAgo; // Convert to chart index (most recent day is last)
+        bpByDay[dayIndex]?.add(value);
+      }
+    });
+
+    // Calculate average blood pressure for each day
+    bpByDay.forEach((dayIndex, values) {
+      if (values.isNotEmpty) {
+        final avgValue = values.reduce((a, b) => a + b) / values.length;
+        spots.add(FlSpot(dayIndex.toDouble(), avgValue));
+      }
+    });
+
+    return spots;
+  }
+
+  // Helper method to get SPO2 data by day
+  Map<int, double> _getSpo2DataByDay(VitalsProvider provider) {
+    final spo2Map = provider.spo2;
+    final now = DateTime.now();
+    final Map<int, List<double>> spo2ByDay = {};
+    final Map<int, double> avgSpo2ByDay = {};
+
+    // Initialize the map with empty lists for all 7 days
+    for (int i = 0; i < 7; i++) {
+      spo2ByDay[i] = [];
+    }
+
+    // Group SPO2 readings by day
+    spo2Map.forEach((timestamp, value) {
+      final daysAgo = now.difference(timestamp).inDays;
+      if (daysAgo >= 0 && daysAgo < 7) {
+        final dayIndex = 6 - daysAgo; // Convert to chart index
+        spo2ByDay[dayIndex]?.add(value);
+      }
+    });
+
+    // Calculate average SPO2 for each day
+    spo2ByDay.forEach((dayIndex, values) {
+      if (values.isNotEmpty) {
+        final avgValue = values.reduce((a, b) => a + b) / values.length;
+        avgSpo2ByDay[dayIndex] = avgValue;
+      }
+    });
+
+    return avgSpo2ByDay;
+  }
+
+  // Helper method to get water intake by day
+  Map<int, int> _getWaterIntakeByDay(VitalsProvider provider) {
+    final waterIntakeMap = provider.dailyWaterIntake;
+    final now = DateTime.now();
+    final Map<int, int> waterByDay = {};
+
+    // Initialize map with zeros for all 7 days
+    for (int i = 0; i < 7; i++) {
+      waterByDay[i] = 0;
+    }
+
+    // Map water intake to chart index
+    waterIntakeMap.forEach((date, amount) {
+      final daysAgo = now.difference(date).inDays;
+      if (daysAgo >= 0 && daysAgo < 7) {
+        final dayIndex = 6 - daysAgo; // Convert to chart index
+        waterByDay[dayIndex] = amount;
+      }
+    });
+
+    return waterByDay;
+  }
+
+  // Helper method to create bar groups for SPO2 chart
+  List<BarChartGroupData> _getBarGroups(Map<int, double> dataByDay, Color color) {
+    return dataByDay.entries.map((entry) {
+      return BarChartGroupData(
+        x: entry.key,
+        barRods: [
+          BarChartRodData(
+            toY: entry.value,
+            color: color,
+            width: 20,
+            borderRadius: BorderRadius.circular(4),
+            backDrawRodData: BackgroundBarChartRodData(
+              show: true,
+              toY: 100,
+              color: Colors.grey[200],
+            ),
+          ),
+        ],
+      );
+    }).toList();
+  }
+
+  // Helper method to create bar groups for water intake chart
+  List<BarChartGroupData> _getIntBarGroups(Map<int, int> dataByDay, Color color) {
+    return dataByDay.entries.map((entry) {
+      return BarChartGroupData(
+        x: entry.key,
+        barRods: [
+          BarChartRodData(
+            toY: entry.value.toDouble(),
+            color: color,
+            width: 20,
+            borderRadius: BorderRadius.circular(4),
+            backDrawRodData: BackgroundBarChartRodData(
+              show: true,
+              toY: _calculateMaxWaterY(dataByDay),
+              color: Colors.grey[200],
+            ),
+          ),
+        ],
+      );
+    }).toList();
+  }
+
+  // Helper method to convert steps data to chart format
+  Map<int, int> _convertStepsDataToChartFormat(VitalsProvider provider) {
+    final dailyStepsMap = provider.dailySteps;
+    final now = DateTime.now();
+    final Map<int, int> stepsByDayIndex = {};
+
+    // Initialize map with zeros for all 7 days
+    for (int i = 0; i < 7; i++) {
+      stepsByDayIndex[i] = 0;
+    }
+
+    // Map step counts to chart day indices
+    dailyStepsMap.forEach((date, steps) {
+      final daysAgo = now.difference(date).inDays;
+      if (daysAgo >= 0 && daysAgo < 7) {
+        final dayIndex = 6 - daysAgo; // Convert to chart index (most recent day is last)
+        stepsByDayIndex[dayIndex] = steps;
+      }
+    });
+
+    return stepsByDayIndex;
+  }
+
+  // Helper method to create bar groups for steps chart
+  List<BarChartGroupData> _getStepsBarGroups(Map<int, int> dataByDay, Color color) {
+    return dataByDay.entries.map((entry) {
+      return BarChartGroupData(
+        x: entry.key,
+        barRods: [
+          BarChartRodData(
+            toY: entry.value.toDouble(),
+            color: color,
+            width: 20,
+            borderRadius: BorderRadius.circular(4),
+            backDrawRodData: BackgroundBarChartRodData(
+              show: true,
+              toY: _calculateMaxStepsY(Provider.of<VitalsProvider>(context)),
+              color: Colors.grey[200],
+            ),
+          ),
+        ],
+      );
+    }).toList();
+  }
+
+  // Calculate minimum Y value for charts
+  double _calculateMinY(List<FlSpot> spots, double defaultValue) {
+    if (spots.isEmpty) return defaultValue;
+    double minY = spots.first.y;
+    for (var spot in spots) {
+      if (spot.y < minY) minY = spot.y;
+    }
+    return (minY * 0.9).floorToDouble(); // Add 10% margin below
+  }
+
+  // Calculate maximum Y value for charts
+  double _calculateMaxY(List<FlSpot> spots, double defaultValue) {
+    if (spots.isEmpty) return defaultValue;
+    double maxY = spots.first.y;
+    for (var spot in spots) {
+      if (spot.y > maxY) maxY = spot.y;
+    }
+    return (maxY * 1.1).ceilToDouble(); // Add 10% margin above
+  }
+
+  // Calculate maximum Y value for water intake chart
+  double _calculateMaxWaterY(Map<int, int> waterByDay) {
+    int maxValue = 0;
+    waterByDay.forEach((day, amount) {
+      if (amount > maxValue) maxValue = amount;
+    });
+
+    // If there's no data or maximum is too small, use 3000 as default
+    if (maxValue < 1000) {
+      return 3000;
+    }
+
+    // Round up to nearest 500
+    return (((maxValue * 1.1) / 500).ceil() * 500).toDouble();
+  }
+
+  // Calculate maximum Y value for steps chart
+  double _calculateMaxStepsY(VitalsProvider provider) {
+    final dailyStepsMap = provider.dailySteps;
+    int maxValue = 0;
+
+    dailyStepsMap.forEach((date, steps) {
+      if (steps > maxValue) maxValue = steps;
+    });
+
+    // If there's no data or maximum is too small, use 10000 as default
+    if (maxValue < 1000) {
+      return 10000;
+    }
+
+    // Round up to nearest 1000
+    return (((maxValue * 1.1) / 1000).ceil() * 1000).toDouble();
   }
 }

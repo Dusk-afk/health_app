@@ -10,12 +10,13 @@ dependencies:
   flutter:
     sdk: flutter
   dio: ^5.4.0  # HTTP client for API calls
-  health: ^8.1.0  # For health data
+  health: ^12.1.0  # For health data
   json_annotation: ^4.8.1  # For JSON serialization
   flutter_secure_storage: ^9.0.0  # For secure storage of tokens
   jwt_decoder: ^2.0.1  # For JWT token handling
   provider: ^6.0.5  # For state management
   fl_chart: ^0.71.0
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
