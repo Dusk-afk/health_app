@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/api/auth_service.dart';
 import '../settings/settings_screen.dart';
 import 'home_screen.dart';
+import 'family_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -71,9 +72,9 @@ class _MainScreenState extends State<MainScreen> {
       case 0:
         return HomeScreen(userName: _userName);
       case 1:
-        return const Center(child: Text('Health Data - Coming Soon'));
+        return const FamilyScreen();
       case 2:
-        return const Center(child: Text('Family Members - Coming Soon'));
+        return const Center(child: Text('Health Vault - Coming Soon'));
       case 3:
         return const SettingsScreen();
       default:
