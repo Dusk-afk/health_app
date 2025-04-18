@@ -18,10 +18,15 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _emailController = TextEditingController(); // Optional email field
+  DateTime? _selectedDateOfBirth;
+  String? _selectedGender; // Added for gender selection
   bool _isObscurePassword = true;
   bool _isObscureConfirmPassword = true;
   bool _isLoading = false;
   String? _errorMessage;
+
+  // Gender options
+  final List<String> _genderOptions = ['Male', 'Female', 'Prefer not to say'];
 
   @override
   void dispose() {
@@ -49,6 +54,8 @@ class _SignupScreenState extends State<SignupScreen> {
           phoneNumber: phoneNumber,
           password: _passwordController.text,
           email: _emailController.text.isNotEmpty ? _emailController.text.trim() : null,
+          dateOfBirth: _selectedDateOfBirth,
+          gender: _selectedGender,
         );
 
         if (!mounted) return;
@@ -203,6 +210,73 @@ class _SignupScreenState extends State<SignupScreen> {
                         if (!emailRegExp.hasMatch(value)) {
                           return 'Please enter a valid email address';
                         }
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Date of Birth Field
+                  TextFormField(
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      labelText: 'Date of Birth',
+                      prefixIcon: const Icon(Icons.calendar_today),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime.now(),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          _selectedDateOfBirth = pickedDate;
+                        });
+                      }
+                    },
+                    validator: (value) {
+                      if (_selectedDateOfBirth == null) {
+                        return 'Please select your date of birth';
+                      }
+                      return null;
+                    },
+                    controller: TextEditingController(
+                      text: _selectedDateOfBirth != null
+                          ? "${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}"
+                          : '',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Gender Selection Field
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: 'Gender',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    value: _selectedGender,
+                    items: _genderOptions.map((String gender) {
+                      return DropdownMenuItem<String>(
+                        value: gender,
+                        child: Text(gender),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedGender = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select your gender';
                       }
                       return null;
                     },

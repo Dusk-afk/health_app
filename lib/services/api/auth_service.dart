@@ -6,33 +6,32 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import '../../config/env_config.dart';
 import 'api_client.dart';
 
-
 class AuthService {
   late final ApiClient _apiClient;
   final FlutterSecureStorage _secureStorage;
 
-
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userDataKey = 'user_data';
-static final int _tokenRefreshThreshold = EnvConfig.tokenRefreshThreshold;
-static AuthService? _instance;
+  static final int _tokenRefreshThreshold = EnvConfig.tokenRefreshThreshold;
+  static AuthService? _instance;
 
   final _authStateController = StreamController<bool>.broadcast();
 
-
-  /// get single insta nce of authservice 
+  /// get single insta nce of authservice
   static AuthService get instance {
     _instance ??= AuthService._internal();
+
     /// return _intance ;
     return _instance!;
   }
+
   AuthService._internal() : _secureStorage = const FlutterSecureStorage() {
     //api client created here !!!
     _apiClient = ApiClient(baseUrl: EnvConfig.apiUrl);
   }
 
-  /// toggl e is done here 
+  /// toggl e is done here
   Stream<bool> get authStateChanges => _authStateController.stream;
 
   Future<bool> isAuthenticated() async {
@@ -42,12 +41,11 @@ static AuthService? _instance;
     try {
       final bool isExpired = JwtDecoder.isExpired(accessToken);
 
-
       if (isExpired) {
-        //if the token gets expired or something... then refresh the token 
+        //if the token gets expired or something... then refresh the token
         return await refreshToken();
       }
-      // threshold time 
+      // threshold time
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
       final int expiryTimestamp = decodedToken['exp'];
       final int currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
@@ -59,7 +57,7 @@ static AuthService? _instance;
 
       return true;
     } catch (e) {
-      // for error detection 
+      // for error detection
       return false;
     }
   }
@@ -83,18 +81,19 @@ static AuthService? _instance;
 
       return {'success': false, 'message': 'Login failed. Please check your credentials.'};
     } catch (e) {
-
       return {'success': false, 'message': e.toString().replaceAll('Exception: ', '')};
     }
   }
 
-  /// sign in happen there 
+  /// sign in happen there
   Future<Map<String, dynamic>> signup({
     required String fullName,
     required String phoneNumber,
     required String password,
     String? email,
     String? username,
+    DateTime? dateOfBirth,
+    String? gender,
   }) async {
     try {
       final Map<String, dynamic> requestData = {
@@ -105,6 +104,8 @@ static AuthService? _instance;
 
       if (email != null) requestData['email'] = email;
       if (username != null) requestData['username'] = username;
+      if (dateOfBirth != null) requestData['date_of_birth'] = dateOfBirth.toIso8601String();
+      if (gender != null) requestData['gender'] = gender;
 
       final response = await _apiClient.post(
         EnvConfig.signupEndpoint,
@@ -124,7 +125,7 @@ static AuthService? _instance;
     }
   }
 
-  /// loggg out 
+  /// loggg out
   Future<void> logout() async {
     await _secureStorage.delete(key: _accessTokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);
@@ -132,7 +133,7 @@ static AuthService? _instance;
     _authStateController.add(false);
   }
 
-  /// fetch curr user data 
+  /// fetch curr user data
   Future<Map<String, dynamic>?> getUserData() async {
     try {
       // secure storage mein hai data??
@@ -143,7 +144,7 @@ static AuthService? _instance;
         return json.decode(cachedUserData) as Map<String, dynamic>;
       }
 
-      // fetch tabhi when it is authenticated 
+      // fetch tabhi when it is authenticated
       if (await isAuthenticated()) {
         final token = await getAccessToken();
 
@@ -183,7 +184,7 @@ static AuthService? _instance;
       }
       return false;
     } catch (e) {
-      // agar token is invlaid remove all the tokens 
+      // agar token is invlaid remove all the tokens
       await logout();
       return false;
     }
@@ -198,7 +199,7 @@ static AuthService? _instance;
     return await _secureStorage.read(key: _accessTokenKey);
   }
 
-  /// Handle auth response 
+  /// Handle auth response
   Future<void> _handleAuthResponse(Map<String, dynamic> data) async {
     final accessToken = data['access_token'];
     final refreshToken = data['refresh_token'];

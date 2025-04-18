@@ -1,11 +1,22 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import '../../../models/family_member.dart';
+import '../../../models/medical_document.dart';
+import '../../../services/api/document_service.dart';
+import '../add_document_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MemberScreen extends StatefulWidget {
-  final Map<String, dynamic> memberData;
+  final FamilyMember familyMember;
 
   const MemberScreen({
     Key? key,
-    required this.memberData,
+    required this.familyMember,
   }) : super(key: key);
 
   @override
@@ -134,10 +145,41 @@ class _MemberScreenState extends State<MemberScreen> with SingleTickerProviderSt
     },
   };
 
+  // Add document service and documents list
+  final DocumentService _documentService = DocumentService.instance;
+  List<MedicalDocument> _documents = [];
+  bool _isLoadingDocuments = true;
+  String? _documentError;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _loadDocuments();
+  }
+
+  // Add method to load documents
+  Future<void> _loadDocuments() async {
+    if (widget.familyMember.familyMemberId == null) return;
+
+    setState(() {
+      _isLoadingDocuments = true;
+      _documentError = null;
+    });
+
+    try {
+      final documents = await _documentService.getFamilyMemberDocuments(widget.familyMember.familyMemberId);
+
+      setState(() {
+        _documents = documents;
+        _isLoadingDocuments = false;
+      });
+    } catch (e) {
+      setState(() {
+        _documentError = e.toString();
+        _isLoadingDocuments = false;
+      });
+    }
   }
 
   @override
@@ -217,19 +259,12 @@ class _MemberScreenState extends State<MemberScreen> with SingleTickerProviderSt
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Implement add new record functionality
-        },
-        backgroundColor: const Color(0xFFA2A3F3),
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
   Widget _buildProfileSummary() {
     // Get gender from member data with a default value
-    final String gender = widget.memberData['gender'] ?? 'prefer_not_to_say';
+    final String gender = widget.familyMember.gender ?? 'prefer_not_to_say';
 
     // Define colors based on gender (blue for male/prefer not to say, purple for female)
     final Map<String, List<Color>> genderColors = {
@@ -271,7 +306,7 @@ class _MemberScreenState extends State<MemberScreen> with SingleTickerProviderSt
               backgroundColor: bgColor,
               radius: 50,
               child: Icon(
-                widget.memberData['avatar'],
+                widget.familyMember.avatar,
                 size: 60,
                 color: avatarColor,
               ),
@@ -279,7 +314,7 @@ class _MemberScreenState extends State<MemberScreen> with SingleTickerProviderSt
           ),
           const SizedBox(height: 16),
           Text(
-            widget.memberData['name'],
+            widget.familyMember.fullName,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -287,7 +322,7 @@ class _MemberScreenState extends State<MemberScreen> with SingleTickerProviderSt
           ),
           const SizedBox(height: 4),
           Text(
-            widget.memberData['relation'],
+            widget.familyMember.relationship,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -295,7 +330,7 @@ class _MemberScreenState extends State<MemberScreen> with SingleTickerProviderSt
           ),
           const SizedBox(height: 4),
           Text(
-            'Age: ${widget.memberData['age']}',
+            'Age: ${widget.familyMember.age}',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -661,81 +696,325 @@ class _MemberScreenState extends State<MemberScreen> with SingleTickerProviderSt
   }
 
   Widget _buildDocumentsTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: (_memberDetails['documents'] ?? []).length,
-      itemBuilder: (context, index) {
-        final doc = _memberDetails['documents']![index];
+    // Create a FamilyMember object from member data to pass to AddDocumentScreen
+    final familyMember = widget.familyMember;
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: doc['type'] == 'PDF' ? const Color(0xFFECC2C0).withOpacity(0.1) : const Color(0xFF9AD7D8).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                doc['icon'],
-                color: doc['type'] == 'PDF' ? const Color(0xFFECC2C0) : const Color(0xFF9AD7D8),
-                size: 24,
-              ),
+    if (_isLoadingDocuments) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_documentError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.red,
+              size: 48,
             ),
-            title: Text(
-              doc['title'],
-              style: const TextStyle(
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load documents',
+              style: TextStyle(
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                color: Colors.grey[700],
               ),
             ),
-            subtitle: Text(
-              'Added on ${doc['date']}',
+            const SizedBox(height: 8),
+            Text(
+              _documentError!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadDocuments,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF9AD7D8),
+              ),
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_documents.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.description_outlined,
+              color: Colors.grey,
+              size: 64,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Documents Yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add medical documents like prescriptions,\nlab reports, and scans',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey[600],
-                fontSize: 14,
               ),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.download,
-                    color: Colors.grey[600],
-                  ),
-                  onPressed: () {
-                    // TODO: Implement download functionality
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.share,
-                    color: Colors.grey[600],
-                  ),
-                  onPressed: () {
-                    // TODO: Implement share functionality
-                  },
-                ),
-              ],
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _navigateToAddDocument(familyMember),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Document'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF9AD7D8),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
             ),
+          ],
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _documents.length,
+          itemBuilder: (context, index) {
+            final doc = _documents[index];
+
+            // Determine icon based on document type
+            IconData docIcon;
+            Color iconColor;
+
+            if (doc.documentType.toLowerCase().contains('pdf') || doc.documentType.toLowerCase().contains('prescription')) {
+              docIcon = Icons.picture_as_pdf;
+              iconColor = const Color(0xFFECC2C0);
+            } else if (doc.documentType.toLowerCase().contains('image') ||
+                doc.documentType.toLowerCase().contains('xray') ||
+                doc.documentType.toLowerCase().contains('scan')) {
+              docIcon = Icons.image;
+              iconColor = const Color(0xFF9AD7D8);
+            } else {
+              docIcon = Icons.description;
+              iconColor = const Color(0xFFA2A3F3);
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    docIcon,
+                    color: iconColor,
+                    size: 24,
+                  ),
+                ),
+                title: Text(
+                  doc.documentName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(
+                      doc.documentType,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Added on ${doc.documentDate}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.open_in_new,
+                        color: Colors.grey[600],
+                      ),
+                      onPressed: () => _openDocument(doc),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: Colors.red[400],
+                      ),
+                      onPressed: () => _deleteDocument(doc),
+                    ),
+                  ],
+                ),
+                onTap: () => _openDocument(doc),
+              ),
+            );
+          },
+        ),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton(
+            onPressed: () => _navigateToAddDocument(familyMember),
+            backgroundColor: const Color(0xFF9AD7D8),
+            child: const Icon(Icons.add),
           ),
-        );
-      },
+        ),
+      ],
     );
+  }
+
+  // Helper methods for document operations
+  void _navigateToAddDocument(FamilyMember familyMember) async {
+    // Navigate to add document screen
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddDocumentScreen(familyMember: familyMember),
+      ),
+    );
+
+    // Refresh documents if a new one was added
+    if (result == true) {
+      _loadDocuments();
+    }
+  }
+
+  Future<void> _openDocument(MedicalDocument document) async {
+    if (document.downloadUrl == null) return;
+    print(document.downloadUrl!);
+    launchUrl(Uri.parse(document.downloadUrl!));
+    return;
+
+    try {
+      Dio dio = Dio();
+      dio.options.connectTimeout = const Duration(seconds: 30);
+      dio.options.receiveTimeout = const Duration(seconds: 30);
+
+      final response = await dio.get(
+        document.downloadUrl!,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: true,
+          validateStatus: (status) => status! < 500,
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        // Get temp directory
+        final tempDir = await getTemporaryDirectory();
+        // Determine file extension
+        String extension = '';
+        if (document.documentType.toLowerCase().contains('pdf')) {
+          extension = '.pdf';
+        } else if (document.documentType.toLowerCase().contains('image') ||
+            document.documentType.toLowerCase().contains('xray') ||
+            document.documentType.toLowerCase().contains('scan')) {
+          extension = '.jpg';
+        } else {
+          extension = '.dat';
+        }
+        // Create file path
+        final filePath = '${tempDir.path}/${document.documentName.replaceAll(RegExp(r"[^\w\d]"), "_")}_${document.id}$extension';
+        final file = File(filePath);
+        await file.writeAsBytes(response.data);
+
+        // Open file with native viewer
+        final result = await OpenFilex.open(file.path);
+        if (result.type != ResultType.done) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open document: ${result.message}')),
+          );
+        }
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to download document')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error opening document: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteDocument(MedicalDocument document) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Document'),
+        content: Text('Are you sure you want to delete "${document.documentName}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final success = await _documentService.deleteDocument(document.id);
+        if (success) {
+          _loadDocuments(); // Refresh the list
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document deleted successfully')));
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete document')));
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
 
   Widget _buildDoctorsTab() {
