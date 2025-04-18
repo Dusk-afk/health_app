@@ -33,7 +33,9 @@ class _FamilyScreenState extends State<FamilyScreen> {
     try {
       final members = await _familyService.getFamilyMembers();
 
-      // Separate current user from family members
+      // curr user alag and family user alag 
+      // final currentUser = members.firstWhere((member) => member.isSelf, orElse: () => members.first);
+      // final otherMembers = members.where((member) => !member.isSelf).toList();
       final currentUser = members.firstWhere((member) => member.isSelf, orElse: () => members.first);
       final otherMembers = members.where((member) => !member.isSelf).toList();
 
@@ -56,7 +58,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with title
+
           const Padding(
             padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
             child: Text(
@@ -69,7 +71,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Description text
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
@@ -82,7 +84,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Refresh button
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: TextButton.icon(
@@ -96,7 +98,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Content area (loading/error/grid)
+        //error loading
           Expanded(
             child: _buildContent(),
           ),
@@ -140,7 +142,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
       );
     }
 
-    // Show empty state or content with self and family members
+    //empty state is here is not found...
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: (_currentUser == null && _familyMembers.isEmpty) ? _buildEmptyState() : _buildFamilyContent(),
@@ -151,7 +153,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Profile card for self
+//profile card 
         if (_currentUser != null) ...[
           const Padding(
             padding: EdgeInsets.only(top: 8.0, bottom: 16.0),
@@ -167,7 +169,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           const SizedBox(height: 24),
         ],
 
-        // Family members section
+  //family members 
         if (_familyMembers.isNotEmpty) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -206,7 +208,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
             ),
           ),
         ] else ...[
-          // No family members yet, but we have current user
+//no family member is there , oinly the curr user is there 
           Expanded(
             child: Center(
               child: Column(
@@ -292,6 +294,30 @@ class _FamilyScreenState extends State<FamilyScreen> {
             ),
           ),
           const SizedBox(width: 16),
+          // Expanded(
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     children: [
+          //       Text(
+          //         user.fullName,
+          //         style: const TextStyle(
+          //           fontSize: 20,
+          //           fontWeight: FontWeight.bold,
+          //           color: Colors.white,
+          //         ),
+          //       ),
+          //       const SizedBox(height: 4),
+          //       if (user.age != null)
+          //         Text(
+          //           'Age: ${user.age}',
+          //           style: const TextStyle(
+          //             fontSize: 14,
+          //             color: Colors.white,
+          //           ),
+          //         ),
+          //     ],
+          //   ),
+          // ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,7 +494,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
   }
 
   Widget _buildFamilyMemberCard(FamilyMember member) {
-    // Define color scheme based on gender
+    //color based on gender
     final String gender = member.gender ?? 'prefer_not_to_say';
 
     // Colors for male/prefer not to say (light blue) and female (purple)
@@ -482,23 +508,23 @@ class _FamilyScreenState extends State<FamilyScreen> {
         const Color(0xFFD0D1FF), // Purple bg
       ],
       'prefer_not_to_say': [
-        const Color(0xFF9AD7D8), // Same as male - light blue
+        const Color(0xFF9AD7D8), // light blue
         const Color(0xFFC9EBED), // Light blue bg
       ],
     };
 
-    // Select colors based on gender
+    // select colors based on gender
     final List<Color> colors = genderColors[gender] ?? genderColors['prefer_not_to_say']!;
     final Color avatarBorderColor = colors[0];
     final Color avatarBgColor = colors[1];
 
     return InkWell(
       onTap: () {
-        // Navigate to member details screen
+        // to mmber scrn
         _navigateToMemberScreen(member);
       },
       onLongPress: () {
-        // Show options menu (edit/delete)
+        //edit and delete 
         _showMemberOptions(member);
       },
       child: Container(
@@ -517,6 +543,26 @@ class _FamilyScreenState extends State<FamilyScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Container(
+            //   padding: const EdgeInsets.all(2),
+            //   decoration: BoxDecoration(
+            //     gradient: LinearGradient(
+            //       colors: [avatarBorderColor, avatarBorderColor.withOpacity(0.7)],
+            //       begin: Alignment.topLeft,
+            //       end: Alignment.bottomRight,
+            //     ),
+            //     shape: BoxShape.circle,
+            //   ),
+            //   child: CircleAvatar(
+            //     backgroundColor: avatarBgColor,
+            //     radius: 40,
+            //     child: Icon(
+            //       member.avatar,
+            //       size: 45,
+            //       color: avatarBorderColor,
+            //     ),
+            //   ),
+            // ),
             Container(
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
@@ -795,6 +841,13 @@ class _FamilyScreenState extends State<FamilyScreen> {
                       try {
                         final dateOfBirth = selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : null;
 
+                        // final newMember = await _familyService.addFamilyMember(
+                        //   fullName: nameController.text,
+                        //   relationship: relationController.text,
+                        //   phoneNumber: phoneController.text.isEmpty ? null : phoneController.text,
+                        //   email: emailController.text.isEmpty ? null : emailController.text,
+                        //   gender: selectedGender == 'prefer_not_to_say' ? null : selectedGender,
+                        // );
                         final newMember = await _familyService.addFamilyMember(
                           fullName: nameController.text,
                           relationship: relationController.text,
