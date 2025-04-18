@@ -150,10 +150,10 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.medical_services_rounded,
-              size: 100,
-              color: Theme.of(context).primaryColor,
+            Image.asset(
+              'assets/logo.png',
+              width: 100,
+              height: 100,
             ),
             const SizedBox(height: 24),
             Text(

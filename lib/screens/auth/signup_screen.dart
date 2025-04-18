@@ -108,10 +108,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // App Logo or Icon
-                  Icon(
-                    Icons.medical_services_rounded,
-                    size: 60,
-                    color: Theme.of(context).primaryColor,
+                  Image.asset(
+                    'assets/logo.png',
+                    width: 60,
+                    height: 60,
                   ),
                   const SizedBox(height: 20),
 
