@@ -343,7 +343,7 @@ class _MemberScreenState extends State<MemberScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildQuickStat('Illnesses', _memberDetails['illnesses']?.length ?? 0, avatarColor),
-              _buildQuickStat('Documents', _memberDetails['documents']?.length ?? 0, avatarColor),
+              _buildQuickStat('Documents', _documents.length, avatarColor),
               _buildQuickStat('Doctors', _memberDetails['doctors']?.length ?? 0, avatarColor),
             ],
           ),

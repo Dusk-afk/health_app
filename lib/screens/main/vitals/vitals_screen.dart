@@ -20,6 +20,9 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
   // Tracking loading state
   bool _isLoading = true;
 
+  // Control whether to show mock data when real data is not available
+  bool _useMockDataWhenEmpty = true;
+
   @override
   void initState() {
     super.initState();
@@ -226,7 +229,10 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
     final heartRateData = _convertHeartRateDataToChartFormat(vitalsProvider);
 
     // Calculate average
-    final avgHeartRate = vitalsProvider.averageHeartRate.toStringAsFixed(0);
+    String avgHeartRate = vitalsProvider.averageHeartRate.toStringAsFixed(0);
+    if (avgHeartRate == "0" && _useMockDataWhenEmpty) {
+      avgHeartRate = "72";
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -327,6 +333,10 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
     // Calculate averages
     final avgSystolic = vitalsProvider.averageSystolic.toStringAsFixed(0);
     final avgDiastolic = vitalsProvider.averageDiastolic.toStringAsFixed(0);
+    String avgBP = "$avgSystolic/$avgDiastolic";
+    if (avgSystolic == "0" && avgDiastolic == "0" && _useMockDataWhenEmpty) {
+      avgBP = "120/80";
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -341,7 +351,7 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
             ),
           ),
           Text(
-            'Average: $avgSystolic/$avgDiastolic mmHg',
+            'Average: $avgBP mmHg',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey,
@@ -464,7 +474,10 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
     final Map<int, double> spo2ByDay = _getSpo2DataByDay(vitalsProvider);
 
     // Calculate average
-    final avgSpo2 = vitalsProvider.averageSpo2.toStringAsFixed(0);
+    String avgSpo2 = vitalsProvider.averageSpo2.toStringAsFixed(0);
+    if (avgSpo2 == "0" && _useMockDataWhenEmpty) {
+      avgSpo2 = "97";
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -692,7 +705,26 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
       }
     });
 
+    // Add mock data if enabled and no real data is available
+    if (_useMockDataWhenEmpty && spots.isEmpty) {
+      return _generateMockHeartRateData();
+    }
+
     return spots;
+  }
+
+  // Generate mock heart rate data
+  List<FlSpot> _generateMockHeartRateData() {
+    final List<FlSpot> mockData = [];
+    // Generate realistic heart rate data with some daily variation
+    mockData.add(FlSpot(0, 72));
+    mockData.add(FlSpot(1, 75));
+    mockData.add(FlSpot(2, 68));
+    mockData.add(FlSpot(3, 71));
+    mockData.add(FlSpot(4, 74));
+    mockData.add(FlSpot(5, 70));
+    mockData.add(FlSpot(6, 73));
+    return mockData;
   }
 
   // Helper method to convert blood pressure data to chart format
@@ -726,7 +758,39 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
       }
     });
 
+    // Add mock data if enabled and no real data is available
+    if (_useMockDataWhenEmpty && spots.isEmpty) {
+      return _generateMockBloodPressureData(isSystolic);
+    }
+
     return spots;
+  }
+
+  // Generate mock blood pressure data
+  List<FlSpot> _generateMockBloodPressureData(bool isSystolic) {
+    final List<FlSpot> mockData = [];
+
+    if (isSystolic) {
+      // Systolic values (top number) - typically around 120 mmHg
+      mockData.add(FlSpot(0, 118));
+      mockData.add(FlSpot(1, 122));
+      mockData.add(FlSpot(2, 119));
+      mockData.add(FlSpot(3, 121));
+      mockData.add(FlSpot(4, 117));
+      mockData.add(FlSpot(5, 123));
+      mockData.add(FlSpot(6, 120));
+    } else {
+      // Diastolic values (bottom number) - typically around 80 mmHg
+      mockData.add(FlSpot(0, 78));
+      mockData.add(FlSpot(1, 81));
+      mockData.add(FlSpot(2, 79));
+      mockData.add(FlSpot(3, 80));
+      mockData.add(FlSpot(4, 77));
+      mockData.add(FlSpot(5, 82));
+      mockData.add(FlSpot(6, 80));
+    }
+
+    return mockData;
   }
 
   // Helper method to get SPO2 data by day
@@ -758,7 +822,26 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
       }
     });
 
+    // Add mock data if enabled and no real data is available
+    if (_useMockDataWhenEmpty && avgSpo2ByDay.isEmpty) {
+      return _generateMockSpo2Data();
+    }
+
     return avgSpo2ByDay;
+  }
+
+  // Generate mock SPO2 data
+  Map<int, double> _generateMockSpo2Data() {
+    final Map<int, double> mockData = {};
+    // Generate realistic SPO2 data (typically 95-99%)
+    mockData[0] = 97;
+    mockData[1] = 98;
+    mockData[2] = 96;
+    mockData[3] = 97;
+    mockData[4] = 98;
+    mockData[5] = 99;
+    mockData[6] = 98;
+    return mockData;
   }
 
   // Helper method to get water intake by day
@@ -781,7 +864,68 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
       }
     });
 
+    // Add mock data if enabled and no real data is available
+    if (_useMockDataWhenEmpty && waterByDay.values.every((amount) => amount == 0)) {
+      return _generateMockWaterIntakeData();
+    }
+
     return waterByDay;
+  }
+
+  // Generate mock water intake data
+  Map<int, int> _generateMockWaterIntakeData() {
+    final Map<int, int> mockData = {};
+    // Generate realistic water intake data (typically 1500-2500 ml/day)
+    mockData[0] = 1800;
+    mockData[1] = 2100;
+    mockData[2] = 1950;
+    mockData[3] = 2300;
+    mockData[4] = 1750;
+    mockData[5] = 2200;
+    mockData[6] = 2000;
+    return mockData;
+  }
+
+  // Helper method to convert steps data to chart format
+  Map<int, int> _convertStepsDataToChartFormat(VitalsProvider provider) {
+    final dailyStepsMap = provider.dailySteps;
+    final now = DateTime.now();
+    final Map<int, int> stepsByDayIndex = {};
+
+    // Initialize map with zeros for all 7 days
+    for (int i = 0; i < 7; i++) {
+      stepsByDayIndex[i] = 0;
+    }
+
+    // Map step counts to chart day indices
+    dailyStepsMap.forEach((date, steps) {
+      final daysAgo = now.difference(date).inDays;
+      if (daysAgo >= 0 && daysAgo < 7) {
+        final dayIndex = 6 - daysAgo; // Convert to chart index (most recent day is last)
+        stepsByDayIndex[dayIndex] = steps;
+      }
+    });
+
+    // Add mock data if enabled and no real data is available
+    if (_useMockDataWhenEmpty && stepsByDayIndex.values.every((steps) => steps == 0)) {
+      return _generateMockStepsData();
+    }
+
+    return stepsByDayIndex;
+  }
+
+  // Generate mock steps data
+  Map<int, int> _generateMockStepsData() {
+    final Map<int, int> mockData = {};
+    // Generate realistic step count data
+    mockData[0] = 6345;
+    mockData[1] = 8721;
+    mockData[2] = 5280;
+    mockData[3] = 9462;
+    mockData[4] = 7135;
+    mockData[5] = 3967;
+    mockData[6] = 8241;
+    return mockData;
   }
 
   // Helper method to create bar groups for SPO2 chart
@@ -826,29 +970,6 @@ class _VitalsScreenState extends State<VitalsScreen> with SingleTickerProviderSt
         ],
       );
     }).toList();
-  }
-
-  // Helper method to convert steps data to chart format
-  Map<int, int> _convertStepsDataToChartFormat(VitalsProvider provider) {
-    final dailyStepsMap = provider.dailySteps;
-    final now = DateTime.now();
-    final Map<int, int> stepsByDayIndex = {};
-
-    // Initialize map with zeros for all 7 days
-    for (int i = 0; i < 7; i++) {
-      stepsByDayIndex[i] = 0;
-    }
-
-    // Map step counts to chart day indices
-    dailyStepsMap.forEach((date, steps) {
-      final daysAgo = now.difference(date).inDays;
-      if (daysAgo >= 0 && daysAgo < 7) {
-        final dayIndex = 6 - daysAgo; // Convert to chart index (most recent day is last)
-        stepsByDayIndex[dayIndex] = steps;
-      }
-    });
-
-    return stepsByDayIndex;
   }
 
   // Helper method to create bar groups for steps chart

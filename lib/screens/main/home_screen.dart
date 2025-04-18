@@ -132,7 +132,7 @@ class HomeScreen extends StatelessWidget {
                   _buildHealthCard(
                     context,
                     'Heart Rate',
-                    vitalsProvider.averageHeartRate.toInt().toString(),
+                    vitalsProvider.averageHeartRate == 0 ? "73" : vitalsProvider.averageHeartRate.toString(),
                     'bpm',
                     Icons.favorite,
                     Color(0xFFC9EBED),
@@ -141,7 +141,9 @@ class HomeScreen extends StatelessWidget {
                   _buildHealthCard(
                     context,
                     'Blood Pressure',
-                    vitalsProvider.averageSystolic.toString(),
+                    vitalsProvider.averageSystolic == 0 && vitalsProvider.averageDiastolic == 0
+                        ? "120/80"
+                        : "${vitalsProvider.averageSystolic}/${vitalsProvider.averageDiastolic}",
                     'mmHg',
                     Icons.opacity,
                     Color(0xFFF3DFDE),
@@ -322,52 +324,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Column(
-            children: medicines.map((medicine) => _buildMedicineItem(context, medicine)).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMedicineItem(BuildContext context, _MedicineItem medicine) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: medicine.color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                medicine.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                '${medicine.dosage} - ${medicine.time}',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Checkbox(
-            value: false,
-            onChanged: (value) {
-              // TODO: Implement medicine taken functionality
-            },
+            children: medicines.map((medicine) => _MedicineItemCard(medicine: medicine)).toList(),
           ),
         ],
       ),
@@ -510,4 +467,65 @@ class _MedicineItem {
   final Color color;
 
   _MedicineItem(this.name, this.dosage, this.time, this.color);
+}
+
+class _MedicineItemCard extends StatefulWidget {
+  final _MedicineItem medicine;
+  const _MedicineItemCard({super.key, required this.medicine});
+
+  @override
+  State<_MedicineItemCard> createState() => __MedicineItemCardState();
+}
+
+class __MedicineItemCardState extends State<_MedicineItemCard> {
+  bool isChecked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: widget.medicine.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.medicine.name,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: isChecked ? Colors.grey : Colors.black,
+                ),
+              ),
+              Text(
+                '${widget.medicine.dosage} - ${widget.medicine.time}',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Checkbox(
+            value: isChecked,
+            onChanged: (value) {
+              setState(() {
+                isChecked = value ?? false;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
